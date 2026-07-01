@@ -1,0 +1,164 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wise Rock Fish Radio — Layout Plan</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#08131f;color:#bfe6ff;font-family:'Courier New',ui-monospace,monospace;overflow:hidden}
+#wrap{display:flex;height:100%}
+#stagewrap{flex:1;position:relative;display:grid;place-items:center;padding:14px}
+#stage{position:relative;width:min(100%,calc((100vh - 28px)*1.6));aspect-ratio:16/10;background:
+  radial-gradient(ellipse 120% 95% at 50% 32%, rgba(40,24,10,0) 40%, rgba(28,16,6,.5) 80%, rgba(16,9,3,.8)),
+  repeating-linear-gradient(93deg,#6b4a2e 0 14px,#5f4128 14px 30px,#6b4a2e 30px 46px,#573b24 46px 61px);
+  border:1px solid #17384f;border-radius:6px;overflow:hidden;touch-action:none}
+.item{position:absolute;cursor:grab;user-select:none}
+.item.sel{outline:3px solid #f0dca0;outline-offset:2px}
+.item .tag{position:absolute;left:0;top:-19px;font-size:11px;letter-spacing:.08em;color:#f0dca0;background:rgba(8,19,31,.72);padding:1px 6px;border-radius:4px;pointer-events:none;white-space:nowrap}
+.item img,.item video{width:100%;height:auto;display:block;pointer-events:none}
+/* composite turntable */
+.tt{position:relative;width:100%;aspect-ratio:2032/1476}
+.tt img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.tt .slab{inset:auto;left:-3%;top:-4%;width:106%;height:auto;filter:drop-shadow(0 10px 11px rgba(0,0,0,.4))}
+/* album row */
+.albums{display:flex;gap:8px;align-items:center;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 94%,transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 94%,transparent 100%)}
+.albums img{width:calc(12.5% - 7px);aspect-ratio:1;object-fit:cover;border-radius:7px;box-shadow:0 3px 9px rgba(40,24,8,.35)}
+.ghost{border:2px dashed #c9a0ff;border-radius:8px;display:grid;place-items:center;color:#c9a0ff;font-size:12px;letter-spacing:.1em;background:rgba(201,160,255,.06);aspect-ratio:3/1}
+.bookbtn{font-size:clamp(14px,2.6vw,34px);filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+/* panel */
+#panel{width:308px;background:#0c1a29;border-left:1px solid #17384f;padding:14px 16px;display:flex;flex-direction:column;gap:9px;overflow:auto}
+h1{font-size:15px;letter-spacing:.16em;color:#7fdfff;margin:0 0 2px;text-transform:uppercase}
+.sub{font-size:11px;color:#5f8ba6;margin:0 0 6px;letter-spacing:.04em}
+.sel{font-size:13px;color:#f0dca0;letter-spacing:.1em}
+label{font-size:11px;color:#7fb0c8;display:block;margin:7px 0 2px;letter-spacing:.06em}
+input[type=range]{width:100%;accent-color:#7fdfff}
+input[type=number]{width:100%;background:#08131f;color:#bfe6ff;border:1px solid #1d4763;border-radius:5px;padding:5px 7px;font-family:inherit;font-size:12px}
+.row{display:flex;gap:8px}.row>div{flex:1}
+button{background:#12314a;color:#bfe6ff;border:1px solid #2b6a92;border-radius:6px;padding:8px 10px;font-family:inherit;font-size:12px;letter-spacing:.06em;cursor:pointer;margin-top:6px}
+button:hover{background:#184260}
+button.primary{background:#134b39;border-color:#2f8a63;color:#a8f5cf}
+textarea{width:100%;height:150px;background:#050d16;color:#8fd6a8;border:1px solid #1d4763;border-radius:6px;font-family:inherit;font-size:10px;padding:8px;resize:vertical}
+.hint{font-size:10.5px;color:#5f8ba6;line-height:1.5}
+.key{font-size:10.5px;color:#7fb0c8}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 8px;vertical-align:middle}
+</style></head>
+<body>
+<div id="wrap">
+  <div id="stagewrap"><div id="stage"></div></div>
+  <div id="panel">
+    <div><h1>Radio · Layout Plan</h1><p class="sub">drag to place · click to select · code below is the exact CSS</p></div>
+    <div class="sel" id="selName">— nothing selected —</div>
+    <div id="controls" style="display:none">
+      <div class="row"><div><label>X %</label><input type="number" id="cx" step="0.5"></div><div><label>Y %</label><input type="number" id="cy" step="0.5"></div></div>
+      <label>Width — <span id="wVal"></span>%</label>
+      <input type="range" id="cw" min="2" max="95" step="0.5">
+      <div id="rotRow"><label>Rotation — <span id="rotVal">0</span>°</label>
+      <input type="range" id="crot" min="-25" max="25" step="1"></div>
+      <label>Z-index — <span id="zVal"></span></label>
+      <input type="range" id="cz" min="0" max="9" step="1">
+    </div>
+    <div class="key"><span class="sw" style="background:#7fdfff"></span>element<span class="sw" style="background:#c9a0ff"></span>future/ghost<span class="sw" style="background:#f0dca0"></span>selected</div>
+    <button class="primary" id="copy">⧉ Copy layout CSS</button>
+    <button id="reset">↺ Reset to live site values</button>
+    <div class="hint">Drag pieces on the wood. The textarea is the exact <b>body.radioview</b> CSS block — copy it and tell Claude "apply the radio layout" (or paste it yourself over the positioning rules in index.html). The dashed box is the future <b>scheduler/tape zone</b> — placing it now records where it should go.</div>
+    <textarea id="out" spellcheck="false"></textarea>
+  </div>
+</div>
+<script>
+// ===== element registry — defaults mirror the LIVE index.html radioview values =====
+const LIVE=[
+  {id:'logo',    sel:'.wrf-logo',    x:8.5, y:3,  w:30, rot:0, z:5, kind:'logo',  note:'TRACE loop video (replaces gold title)'},
+  {id:'turntable',sel:'.wrf-turn',   x:63,  y:0,  w:35, rot:5, z:2, kind:'turn',  hasRot:true},
+  {id:'cassette', sel:'.wrf-tape',   x:1,   y:63, w:20, rot:0, z:2, kind:'tape'},
+  {id:'albums',   sel:'.wrf-grid',   x:14,  y:86, w:83, rot:0, z:3, kind:'albums'},
+  {id:'book-icon',sel:'.wrf-backbook',x:1.4,y:2,  w:3,  rot:0, z:6, kind:'book'},
+  {id:'scheduler',sel:'/* future */ .wrf-schedzone', x:34, y:52, w:30, rot:0, z:1, kind:'ghost', ghost:true},
+];
+let items=LIVE.map(o=>Object.assign({},o));
+let sel=null;
+const stage=document.getElementById('stage');
+
+const COVERS=['deepspaceone','dronezone','dz2','synphaera','n5md','reggae','groovesalad','secretagent'];
+function inner(it){
+  if(it.kind==='logo') return '<video autoplay loop muted playsinline poster="assets/logo/FINAL-rock-lockup.png" src="assets/logo/TRACE-loop-60s.mp4" style="aspect-ratio:2066/410;object-fit:contain"></video>';
+  if(it.kind==='turn') return '<div class="tt">'
+    +'<img class="slab" src="assets/turntable/metal-slab.png">'
+    +'<img src="assets/turntable/painted_base.png">'
+    +'<img src="assets/turntable/painted_record.png">'
+    +'<img src="assets/turntable/painted_tonearm.png">'
+    +'<img src="assets/turntable/painted_button.png"></div>';
+  if(it.kind==='tape') return '<img src="assets/turntable/painted-cassette.png">';
+  if(it.kind==='albums') return '<div class="albums">'+COVERS.map(s=>'<img src="images/cover-'+s+'.png">').join('')+'</div>';
+  if(it.kind==='book') return '<div class="bookbtn">📖</div>';
+  if(it.kind==='ghost') return '<div class="ghost">SCHEDULER / TAPE ZONE</div>';
+  return '';
+}
+function draw(){
+  stage.innerHTML='';
+  items.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='item'+(sel===it.id?' sel':''); d.dataset.id=it.id;
+    d.style.cssText='left:'+it.x+'%;top:'+it.y+'%;width:'+it.w+'%;z-index:'+it.z+(it.rot?';transform:rotate('+it.rot+'deg)':'');
+    d.innerHTML='<span class="tag">'+it.id+(sel===it.id?(' · '+it.x+','+it.y+' · '+it.w+'%'+(it.hasRot?' · '+it.rot+'°':'')):'')+'</span>'+inner(it);
+    stage.appendChild(d);
+  });
+}
+// ===== code output — the exact body.radioview CSS =====
+function fmt(){
+  const l=[];
+  l.push('/* ===== RADIO LAYOUT — body.radioview positioning (from radio-plan.html) ===== */');
+  items.forEach(it=>{
+    const rot=it.hasRot&&it.rot?';transform:rotate('+it.rot+'deg)':'';
+    if(it.ghost){ l.push('/* future zone → left:'+it.x+'%;top:'+it.y+'%;width:'+it.w+'% */'); return; }
+    l.push('body.radioview '+it.sel+'{position:absolute!important;left:'+it.x+'%;top:'+it.y+'%;width:'+it.w+'%!important;z-index:'+it.z+rot+'}');
+  });
+  l.push('/* JSON: '+JSON.stringify(items.map(({id,x,y,w,rot,z})=>({id,x,y,w,rot,z})))+' */');
+  return l.join('\n');
+}
+const out=document.getElementById('out');
+function refresh(){ draw(); out.value=fmt(); }
+
+// ===== panel =====
+const C={name:document.getElementById('selName'),box:document.getElementById('controls'),
+  x:document.getElementById('cx'),y:document.getElementById('cy'),w:document.getElementById('cw'),wv:document.getElementById('wVal'),
+  rot:document.getElementById('crot'),rotv:document.getElementById('rotVal'),rotRow:document.getElementById('rotRow'),
+  z:document.getElementById('cz'),zv:document.getElementById('zVal')};
+function select(id){
+  sel=id; const it=items.find(o=>o.id===id);
+  if(!it){ C.box.style.display='none'; C.name.textContent='— nothing selected —'; refresh(); return; }
+  C.box.style.display='block'; C.name.textContent='▸ '+id+(it.note?' — '+it.note:'');
+  C.x.value=it.x; C.y.value=it.y; C.w.value=it.w; C.wv.textContent=it.w;
+  C.rotRow.style.display=it.hasRot?'block':'none'; C.rot.value=it.rot; C.rotv.textContent=it.rot;
+  C.z.value=it.z; C.zv.textContent=it.z;
+  refresh();
+}
+function upd(k,v){ const it=items.find(o=>o.id===sel); if(!it)return; it[k]=v; refresh(); }
+C.x.oninput=e=>upd('x',+e.target.value); C.y.oninput=e=>upd('y',+e.target.value);
+C.w.oninput=e=>{C.wv.textContent=e.target.value; upd('w',+e.target.value);};
+C.rot.oninput=e=>{C.rotv.textContent=e.target.value; upd('rot',+e.target.value);};
+C.z.oninput=e=>{C.zv.textContent=e.target.value; upd('z',+e.target.value);};
+document.getElementById('copy').onclick=()=>{ navigator.clipboard.writeText(fmt()); const b=document.getElementById('copy'); b.textContent='✓ Copied'; setTimeout(()=>b.textContent='⧉ Copy layout CSS',1200); };
+document.getElementById('reset').onclick=()=>{ items=LIVE.map(o=>Object.assign({},o)); select(sel); refresh(); };
+
+// ===== drag =====
+let drag=null;
+stage.addEventListener('pointerdown',e=>{
+  const g=e.target.closest('.item');
+  if(!g){ select(null); return; }
+  const id=g.dataset.id; select(id);
+  const it=items.find(o=>o.id===id), r=stage.getBoundingClientRect();
+  drag={id,dx:it.x-(e.clientX-r.left)/r.width*100,dy:it.y-(e.clientY-r.top)/r.height*100};
+  stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  const r=stage.getBoundingClientRect(), it=items.find(o=>o.id===drag.id);
+  it.x=Math.round(((e.clientX-r.left)/r.width*100+drag.dx)*2)/2;
+  it.y=Math.round(((e.clientY-r.top)/r.height*100+drag.dy)*2)/2;
+  C.x.value=it.x; C.y.value=it.y;
+  refresh();
+});
+stage.addEventListener('pointerup',()=>{ drag=null; });
+
+refresh();
+</script>
+</body></html>
