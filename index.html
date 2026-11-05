@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Site Blueprint</title>
+<meta name="description" content="Plan changes on top of your real, running website, then export a spec precise enough for a human or an AI model to apply exactly.">
+<style>
+:root{
+  --bg:#071427;--panel:#0c1a29;--line:#17384f;--line-2:#1d4763;--text:#bfe6ff;--muted:#7fb0c8;--dim:#5f8ba6;
+  --cyan:#41b0ff;--cyan-2:#7fdfff;--gold:#f0dca0;--mint:#a8f5cf;--rust:#ffb0a0;
+  --mono:'Courier New',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.6;
+  background-image:linear-gradient(rgba(80,180,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(80,180,255,.05) 1px,transparent 1px);
+  background-size:32px 32px}
+a{color:var(--cyan-2)}
+img{max-width:100%;height:auto;display:block}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+
+/* nav */
+nav{position:sticky;top:0;z-index:10;background:rgba(7,20,39,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;gap:20px;height:56px}
+.brand{font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan-2);text-decoration:none;font-weight:bold;white-space:nowrap}
+.brand span{color:var(--gold)}
+nav .links{display:flex;gap:18px;margin-left:auto;font-size:12px;letter-spacing:.08em}
+nav .links a{color:var(--muted);text-decoration:none}
+nav .links a:hover{color:var(--cyan-2)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:8px;border:1px solid #2b6a92;background:#12314a;color:var(--text);
+  text-decoration:none;font-size:13px;letter-spacing:.06em;transition:background .15s,border-color .15s}
+.btn:hover{background:#184260}
+.btn.go{background:#134b39;border-color:#2f8a63;color:var(--mint)}
+.btn.go:hover{background:#18604a}
+
+/* hero */
+.hero{padding-top:64px;padding-bottom:40px;display:grid;grid-template-columns:1fr 1.25fr;gap:44px;align-items:center}
+.eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+h1{font-size:clamp(30px,4.4vw,52px);line-height:1.08;margin:.3em 0 .4em;letter-spacing:-.01em;color:#e6f6ff}
+h1 em{font-style:normal;color:var(--gold)}
+.lead{font-size:15px;color:var(--muted);max-width:44ch}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.shot{position:relative;border-radius:10px;border:1px solid var(--line-2);overflow:hidden;background:#000;box-shadow:0 30px 60px rgba(0,0,0,.45)}
+.shot::before{content:'';display:block;height:26px;background:#0c1a29;border-bottom:1px solid var(--line);
+  background-image:radial-gradient(circle at 14px 13px,#ff8f7a 4px,transparent 5px),radial-gradient(circle at 30px 13px,#f0dca0 4px,transparent 5px),radial-gradient(circle at 46px 13px,#a8f5cf 4px,transparent 5px)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;font-size:11px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px}
+
+/* sections */
+section{padding:56px 0;border-top:1px solid var(--line)}
+h2{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--cyan-2);margin:0 0 8px}
+.h2big{font-size:clamp(22px,2.6vw,32px);margin:0 0 28px;color:#e6f6ff;line-height:1.2;font-weight:normal}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+.card .ico{font-size:22px;line-height:1;margin-bottom:10px}
+.card h3{margin:0 0 6px;font-size:14px;letter-spacing:.06em;color:var(--gold)}
+.card p{margin:0;font-size:12.5px;color:var(--muted)}
+
+.steps{counter-reset:s;display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.step{position:relative;padding:18px 18px 18px 18px;border-left:2px dashed var(--gold)}
+.step::before{counter-increment:s;content:'0' counter(s);display:block;font-size:26px;color:var(--gold);margin-bottom:6px}
+.step h3{margin:0 0 4px;font-size:13.5px;color:#e6f6ff}
+.step p{margin:0;font-size:12.5px;color:var(--muted)}
+
+/* tools gallery */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.tool{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;text-decoration:none;color:inherit;transition:transform .2s,border-color .2s}
+.tool:hover{transform:translateY(-3px);border-color:#2b6a92}
+.tool img{aspect-ratio:16/10;object-fit:cover;object-position:left top;border-bottom:1px solid var(--line)}
+.tool div{padding:16px 18px 18px}
+.tool h3{margin:0 0 4px;font-size:14px;color:var(--gold);letter-spacing:.04em}
+.tool code{font-size:11px;color:var(--mint)}
+.tool p{margin:8px 0 0;font-size:12.5px;color:var(--muted)}
+
+/* before / after */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.compare figure{margin:0}
+.compare figcaption{font-size:11.5px;color:var(--muted);margin-top:8px;letter-spacing:.04em}
+.compare figcaption b{color:var(--gold)}
+
+/* handoff */
+.handoff{display:grid;grid-template-columns:1fr 1.3fr;gap:30px;align-items:start}
+pre{margin:0;background:#050d16;border:1px solid var(--line-2);border-radius:10px;padding:18px;overflow:auto;font-size:11.5px;line-height:1.65;color:#8fd6a8}
+pre .c{color:var(--dim)}pre .k{color:var(--gold)}pre .a{color:var(--cyan-2)}
+ul.ticks{list-style:none;padding:0;margin:0;font-size:13px;color:var(--muted)}
+ul.ticks li{padding:6px 0 6px 24px;position:relative}
+ul.ticks li::before{content:'▸';position:absolute;left:4px;color:var(--gold)}
+
+/* quickstart */
+.qs{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.qs h3{margin:0 0 10px;font-size:13px;color:var(--gold);letter-spacing:.06em}
+
+footer{border-top:1px solid var(--line);padding:28px 0 40px;font-size:11.5px;color:var(--dim)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
+
+/* responsive */
+@media (max-width:960px){
+  .hero{grid-template-columns:1fr;padding-top:40px}
+  .hero>*{min-width:0}
+  .grid,.tools{grid-template-columns:1fr 1fr}
+  .steps{grid-template-columns:1fr 1fr}
+  .handoff{grid-template-columns:1fr}
+}
+@media (max-width:620px){
+  nav .links{display:none}
+  nav .wrap{justify-content:space-between}
+  .grid,.tools,.steps,.compare,.qs{grid-template-columns:1fr}
+  section{padding:40px 0}
+  .cta .btn{flex:1 1 100%;justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <a class="brand" href="#top">Site <span>Blueprint</span></a>
+  <div class="links"><a href="#features">Features</a><a href="#tools">Tools</a><a href="#handoff">AI handoff</a><a href="#start">Run it</a></div>
+  <a class="btn go" href="blueprint.html?site=demo.html">▶ Try it</a>
+</div></nav>
+
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow">plan · annotate · hand off</div>
+      <h1>Plan your site <em>on top of the real thing</em>.</h1>
+      <p class="lead">Your actual running page loads inside the tool. Drag where things should go, write notes, draw motion paths. Then copy a spec exact enough for a person or an AI model to apply.</p>
+      <div class="cta">
+        <a class="btn go" href="blueprint.html?site=demo.html">▶ Open the demo</a>
+        <a class="btn" href="radio-plan.html">📻 Radio layout plan</a>
+        <a class="btn" href="BLUEPRINT-README.md">⧉ Handoff spec</a>
+      </div>
+      <div class="legend"><span><i style="background:var(--cyan)"></i>existing</span><span><i style="background:var(--gold)"></i>planned</span><span><i style="background:var(--mint)"></i>animation path</span></div>
+    </div>
+    <div class="shot"><img src="docs/screenshots/blueprint-book.png" alt="Site Blueprint planning the demo desk: cyan boxes show where elements are now, dashed gold boxes show where they are planned to go" width="1600" height="983"></div>
+  </div>
+
+  <section id="features"><div class="wrap">
+    <h2>Features</h2>
+    <p class="h2big">The plan can't drift from the page, because the page is the plan.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">🖥</div><h3>Real site in the frame</h3><p>The page you're planning runs live in a same-origin iframe. Nothing to keep in sync, no mockup to redraw.</p></div>
+      <div class="card"><div class="ico">✥</div><h3>Existing vs planned</h3><p>Cyan is the element's live geometry. Gold is where you want it: drag to move, use the corner grip to resize, or nudge with the arrow keys.</p></div>
+      <div class="card"><div class="ico">⇢</div><h3>Preview in place</h3><p>Push the planned rect onto the real element to see it live, then revert with one click.</p></div>
+      <div class="card"><div class="ico">✎</div><h3>Notes on anything</h3><p>Attach instructions to any element. Each line goes into the handoff as its own instruction.</p></div>
+      <div class="card"><div class="ico">◉</div><h3>Animation specs</h3><p>Set a name, trigger, duration and easing, then draw the motion path with a pen. ▶ plays the real element along it.</p></div>
+      <div class="card"><div class="ico">⇓</div><h3>Export &amp; import</h3><p>Export the AI handoff (clipboard), JSON (download or re-import) or CSS. Everything auto-saves per page.</p></div>
+    </div>
+  </div></section>
+
+  <section><div class="wrap">
+    <h2>How it works</h2>
+    <p class="h2big">Four steps, no build.</p>
+    <div class="steps">
+      <div class="step"><h3>Drop it in</h3><p>Copy <b>blueprint.html</b> into your site's folder and serve the folder.</p></div>
+      <div class="step"><h3>Track</h3><p>Switch to ✥ Plan and click any element. It gets a cyan box at its live position.</p></div>
+      <div class="step"><h3>Plan</h3><p>Drag the gold box to where it should go. Add ✎ notes and ◉ animations.</p></div>
+      <div class="step"><h3>Hand off</h3><p>⧉ Copy the AI handoff spec. The model reads <b>BLUEPRINT-README.md</b> and applies it.</p></div>
+    </div>
+  </div></section>
+
+  <section id="tools"><div class="wrap">
+    <h2>In this repo</h2>
+    <p class="h2big">Three pages, each a single HTML file.</p>
+    <div class="tools">
+      <a class="tool" href="blueprint.html?site=demo.html"><img src="docs/screenshots/blueprint-radio.png" alt="Site Blueprint on the radio view: turntable, cassette and album row tracked with planned moves and a drawn animation path" loading="lazy" width="1600" height="983"><div><h3>Site Blueprint</h3><code>blueprint.html</code><p>The planning overlay. Works on any same-origin page via <b>?site=</b>.</p></div></a>
+      <a class="tool" href="radio-plan.html"><img src="docs/screenshots/radio-plan.png" alt="Radio layout plan: draggable turntable, cassette, logo and album row on a wood surface, with generated CSS" loading="lazy" width="1600" height="983"><div><h3>Radio layout plan</h3><code>radio-plan.html</code><p>A smaller drag editor for the Wise Rock Fish Radio view. It emits <b>body.radioview</b> CSS.</p></div></a>
+      <a class="tool" href="demo.html"><img src="docs/screenshots/demo-desk.png" alt="The demo desk: an open notebook on a wooden desk with jars, scissors, a polaroid, a desk radio and a vote notepad" loading="lazy" width="1600" height="983"><div><h3>Demo desk</h3><code>demo.html</code><p>A CSS-only stand-in that uses the documented selectors, so every feature works without the live site.</p></div></a>
+    </div>
+  </div></section>
+
+  <section><div class="wrap">
+    <h2>Book ⇄ Radio</h2>
+    <p class="h2big">One page, two states, both plannable.</p>
+    <div class="compare">
+      <figure><div class="shot"><img src="docs/screenshots/demo-desk.png" alt="Book view of the demo desk" loading="lazy" width="1600" height="983"></div><figcaption><b>Book view</b> (default): desk objects around the open notebook.</figcaption></figure>
+      <figure><div class="shot"><img src="docs/screenshots/demo-radio.png" alt="Radio view of the demo desk with turntable, cassette and album row" loading="lazy" width="1600" height="983"></div><figcaption><b>Radio view</b> (<code>body.radioview</code>): the desk clears and the studio appears. The record spin uses a momentum + friction physics loop.</figcaption></figure>
+    </div>
+  </div></section>
+
+  <section id="handoff"><div class="wrap handoff">
+    <div>
+      <h2>AI handoff</h2>
+      <p class="h2big">Written for a model to apply with no guessing.</p>
+      <ul class="ticks">
+        <li>Both rects per element, in viewport %, captured at a stated viewport size</li>
+        <li>Notes verbatim, one instruction per line</li>
+        <li>Animation specs: trigger, duration, easing, motion-path coordinates</li>
+        <li>Raw JSON at the end as the source of truth (schema v2)</li>
+        <li>The apply rules live in <a href="BLUEPRINT-README.md">BLUEPRINT-README.md</a></li>
+      </ul>
+    </div>
+<pre><span class="c"># SITE BLUEPRINT — AI HANDOFF (v2)</span>
+<span class="c">Site: demo.html · viewport 1180x820</span>
+
+<span class="k">## turntable</span>  <span class="a">(.wrf-turn)</span>  · view:radioview
+existing: left 63.4% · top 0.8% · w 35.9% · h 41.0%
+PLANNED:  left 58% · top 6% · w 38% · h 41%
+- NOTE: sits ON the slab, not floating
+- ANIMATION "spin-up": trigger=power-on duration=2s
+  easing=friction — record ramps to speed
+  motion-path (viewport %): [[71.2,22.4],[73,24.1],…]
+
+<span class="k">## album-row</span>  <span class="a">(.wrf-grid)</span>  · view:radioview
+existing: left 14.0% · top 87.6% · w 83.0% · h 12.1%
+PLANNED:  left 22% · top 84% · w 74% · h 12%
+- NOTE: shrink 10% on mobile</pre>
+  </div></section>
+
+  <section id="start"><div class="wrap">
+    <h2>Run it</h2>
+    <p class="h2big">Any static server works.</p>
+    <div class="qs">
+<div><h3>Node (no install)</h3><pre>npm start
+<span class="c"># → http://localhost:8803/</span>
+npm test   <span class="c"># parse + link checks</span></pre></div>
+<div><h3>Python</h3><pre>python3 -m http.server 8803
+<span class="c"># plan a page of your own:</span>
+<span class="c"># /blueprint.html?site=your-page.html</span></pre></div>
+    </div>
+  </div></section>
+</main>
+
+<footer><div class="wrap"><span>Site Blueprint · zero dependencies · same-origin pages only (browser security)</span><span><a href="README.md">README</a> · <a href="BLUEPRINT-README.md">handoff spec</a></span></div></footer>
+</body>
+</html>

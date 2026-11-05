@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wise Rock Fish Radio — demo desk</title>
+<meta name="description" content="A self-contained demo page for Site Blueprint. It mirrors the selector map documented in BLUEPRINT-README.md: book view with desk objects, plus a radio view toggled by body.radioview.">
+<style>
+/* =====================================================================
+   DEMO SITE for Site Blueprint.
+   Every element uses the selectors documented in BLUEPRINT-README.md
+   (#book, .bookframe, #jars, #scissors, #polaroid, #radio, .siderail,
+   #tabs, #notepad, .loupe, .topbar, .wrf-turn, .wrf-tape, .wrf-grid,
+   .wrf-title, .wrf-backbook, .wrf-power) so the planning tool's
+   KNOWN map, Book/Radio toggles and auto-tracking all work here.
+   No images: everything is drawn with CSS so the repo stays asset-free.
+   ===================================================================== */
+:root{
+  --wood-1:#6b4a2e;--wood-2:#5f4128;--wood-3:#573b24;
+  --paper:#f3e8cf;--paper-edge:#e2d1ad;--ink:#3a2a1a;--ink-soft:#6d5638;
+  --gold:#f0dca0;--cyan:#7fdfff;--mint:#a8f5cf;--rust:#b4552e;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  overflow:hidden;font-family:Georgia,'Times New Roman',serif;color:var(--ink);
+  background:
+    radial-gradient(ellipse 120% 95% at 50% 32%,rgba(40,24,10,0) 40%,rgba(28,16,6,.5) 80%,rgba(16,9,3,.85)),
+    repeating-linear-gradient(93deg,var(--wood-1) 0 14px,var(--wood-2) 14px 30px,var(--wood-1) 30px 46px,var(--wood-3) 46px 61px);
+}
+button{font:inherit;cursor:pointer}
+
+/* ---------- topbar ---------- */
+.topbar{position:absolute;left:0;right:0;top:0;height:46px;display:flex;align-items:center;gap:14px;padding:0 18px 0 76px;
+  background:linear-gradient(#2a1a0c,rgba(42,26,12,.75));color:var(--gold);letter-spacing:.14em;font-size:13px;text-transform:uppercase;z-index:20;
+  box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.topbar b{font-size:15px;letter-spacing:.2em}
+.topbar .now{margin-left:auto;font-family:'Courier New',monospace;font-size:11px;color:var(--mint);letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- siderail ---------- */
+.siderail{position:absolute;left:0;top:0;bottom:0;width:58px;padding:58px 8px 12px;display:flex;flex-direction:column;gap:10px;z-index:21;
+  background:linear-gradient(90deg,#24160a,#3a2512);box-shadow:3px 0 12px rgba(0,0,0,.35)}
+.siderail button{width:42px;height:42px;border-radius:10px;border:1px solid #6b4a2e;background:#2e1d0e;color:var(--gold);font-size:19px;display:grid;place-items:center}
+.siderail button:hover,.siderail button.on{background:#4a2f16;border-color:var(--gold)}
+
+/* ---------- tabs (sit on the book's top edge) ---------- */
+#tabs{position:absolute;left:23%;top:9.5%;display:flex;gap:6px;z-index:6}
+#tabs button{border:0;border-radius:8px 8px 0 0;padding:6px 14px 8px;background:#c9b48a;color:var(--ink);font-size:13px;letter-spacing:.06em;box-shadow:0 -2px 4px rgba(0,0,0,.18)}
+#tabs button.on{background:var(--paper);font-weight:bold}
+
+/* ---------- open book ---------- */
+#book{position:absolute;left:21%;top:14%;width:56%;height:74%;z-index:5}
+.bookframe{position:absolute;inset:0;border-radius:10px;background:#4b2616;padding:2.2%;
+  box-shadow:0 22px 40px rgba(0,0,0,.5),inset 0 0 0 3px #6a3a22}
+.majorsheet{position:relative;height:100%;display:grid;grid-template-columns:1fr 1fr;border-radius:4px;overflow:hidden;
+  background:linear-gradient(90deg,var(--paper) 0 48.5%,#cdb88f 49.5%,#bba57a 50%,#cdb88f 50.5%,var(--paper) 51.5%)}
+.page{padding:7% 8%;overflow:hidden;position:relative}
+.page h2{margin:0 0 .4em;font-size:clamp(16px,1.8vw,26px);letter-spacing:.04em}
+.page p{margin:.5em 0;font-size:clamp(11px,1vw,15px);line-height:1.55;color:var(--ink-soft)}
+.page .kicker{font-family:'Courier New',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--rust)}
+.page ul{padding-left:1.1em;margin:.6em 0;font-size:clamp(11px,.95vw,14px);line-height:1.7;color:var(--ink-soft)}
+.page .folio{position:absolute;bottom:4%;font-family:'Courier New',monospace;font-size:11px;color:#a08a60}
+.page:first-child .folio{left:8%}.page:last-child .folio{right:8%}
+.sketch{margin-top:6%;aspect-ratio:16/9;border:1.5px dashed #b39a6c;border-radius:6px;position:relative;
+  background:repeating-linear-gradient(0deg,transparent 0 17px,rgba(150,120,70,.18) 17px 18px)}
+.sketch::after{content:'sketch: radio studio layout';position:absolute;left:8px;bottom:6px;font-family:'Courier New',monospace;font-size:10px;color:#a08a60}
+.sketch i{position:absolute;border:1.5px solid #8f7448;border-radius:50%}
+
+/* ---------- desk objects ---------- */
+#jars{position:absolute;left:5.5%;top:16%;width:12%;display:flex;gap:6%;align-items:flex-end;z-index:4}
+#jars span{flex:1;border-radius:12px 12px 16px 16px;border:2px solid rgba(220,240,255,.45);
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.05) 40%,rgba(160,200,220,.12));position:relative;box-shadow:0 8px 14px rgba(0,0,0,.35)}
+#jars span::before{content:'';position:absolute;left:-6%;right:-6%;top:-10px;height:12px;border-radius:4px;background:#8a6a3a}
+#jars span::after{content:'';position:absolute;left:12%;right:12%;bottom:8%;border-radius:8px;background:var(--fill);height:var(--h)}
+#jars span:nth-child(1){height:96px;--fill:#d8a24a;--h:55%}
+#jars span:nth-child(2){height:120px;--fill:#6fae7c;--h:40%}
+#jars span:nth-child(3){height:84px;--fill:#c06a4a;--h:65%}
+
+#scissors{position:absolute;left:6%;top:56%;width:9%;aspect-ratio:1;z-index:4;font-size:clamp(34px,5vw,74px);display:grid;place-items:center;
+  color:#c8ccd2;transform:rotate(-28deg);filter:drop-shadow(0 6px 5px rgba(0,0,0,.45))}
+
+#polaroid{position:absolute;right:4%;top:15%;width:15%;padding:.7% .7% 2.6%;background:#fbf7ef;z-index:4;transform:rotate(6deg);box-shadow:0 12px 18px rgba(0,0,0,.4)}
+#polaroid div{aspect-ratio:1;background:radial-gradient(circle at 70% 30%,#ffd98a 0 12%,transparent 13%),linear-gradient(180deg,#5f8ba6,#2c5470 55%,#3f5b2e 56%,#2e4421)}
+#polaroid p{margin:.4em 0 0;font-size:clamp(9px,.85vw,13px);text-align:center;font-style:italic;color:#5d4a2e}
+
+#radio{position:absolute;right:5%;top:52%;width:14%;aspect-ratio:1.6;border-radius:14px;z-index:4;cursor:pointer;
+  background:linear-gradient(#a3492a,#7a3218);box-shadow:0 12px 18px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.2);border:0;padding:0}
+#radio::before{content:'';position:absolute;left:8%;top:18%;width:46%;height:64%;border-radius:8px;
+  background:radial-gradient(circle,#3a1a0c 1.4px,transparent 1.6px) 0 0/7px 7px,#5a2810}
+#radio::after{content:'';position:absolute;right:12%;top:30%;width:22%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f0dca0,#b39250);box-shadow:0 3px 4px rgba(0,0,0,.4)}
+#radio:hover{filter:brightness(1.1)}
+
+#notepad{position:absolute;right:21%;bottom:3%;width:16%;padding:1% 1.2%;z-index:6;background:#fff8c8;transform:rotate(-3deg);
+  box-shadow:0 10px 16px rgba(0,0,0,.38);font-family:'Courier New',monospace;font-size:clamp(10px,.9vw,13px);color:#4a3a1a}
+#notepad b{display:block;letter-spacing:.12em;margin-bottom:.3em}
+#notepad label{display:flex;gap:.4em;align-items:center;margin:.2em 0}
+
+.loupe{position:absolute;left:20%;bottom:5%;width:7%;aspect-ratio:1;border-radius:50%;z-index:6;border:5px solid #b08a3c;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.55),rgba(255,255,255,.08) 45%,rgba(140,200,230,.12));box-shadow:0 10px 16px rgba(0,0,0,.4)}
+.loupe::after{content:'';position:absolute;left:84%;top:84%;width:70%;height:18%;border-radius:6px;background:#3a2512;transform:rotate(45deg);transform-origin:0 50%}
+
+/* =====================================================================
+   RADIO VIEW — body.radioview. Positions mirror radio-plan.html's LIVE
+   defaults so both tools agree on "existing".
+   ===================================================================== */
+.wrfradio{display:none;position:absolute;inset:46px 0 0 58px}
+body.radioview .wrfradio{display:block}
+body.radioview #book,body.radioview #tabs,body.radioview #jars,body.radioview #scissors,body.radioview #polaroid,
+body.radioview #radio,body.radioview #notepad,body.radioview .loupe{display:none}
+
+body.radioview .wrf-backbook{position:absolute!important;left:1.4%;top:2%;width:3%!important;z-index:6}
+body.radioview .wrf-title{position:absolute!important;left:8.5%;top:3%;width:30%!important;z-index:5}
+body.radioview .wrf-turn{position:absolute!important;left:63%;top:0%;width:35%!important;z-index:2;transform:rotate(5deg)}
+body.radioview .wrf-tape{position:absolute!important;left:1%;top:63%;width:20%!important;z-index:2}
+body.radioview .wrf-grid{position:absolute!important;left:14%;top:86%;width:83%!important;z-index:3}
+
+.wrf-backbook{background:none;border:0;padding:0;font-size:clamp(18px,2.6vw,34px);filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.wrf-title{color:var(--gold);text-shadow:0 3px 0 #5a3a18,0 8px 18px rgba(0,0,0,.5)}
+.wrf-title h1{margin:0;font-size:clamp(22px,3.4vw,54px);letter-spacing:.08em;line-height:1}
+.wrf-title p{margin:.35em 0 0;font-family:'Courier New',monospace;font-size:clamp(10px,.95vw,14px);letter-spacing:.22em;color:var(--mint);text-shadow:none}
+
+/* turntable composite: slab · base · record · tonearm · power */
+.wrf-turn{aspect-ratio:2032/1476}
+.wrf-pslab{position:absolute;left:-3%;top:-4%;width:106%;height:108%;border-radius:18px;
+  background:linear-gradient(135deg,#9aa2ab,#5f666e 40%,#8b929a 60%,#4d535a);box-shadow:0 14px 22px rgba(0,0,0,.45)}
+.wrf-pbase{position:absolute;inset:0;border-radius:14px;background:linear-gradient(160deg,#3a2414,#22140a);box-shadow:inset 0 2px 0 rgba(255,255,255,.1)}
+.wrf-precord{position:absolute;left:6%;top:8%;width:62%;aspect-ratio:1;border-radius:50%;
+  background:
+    radial-gradient(circle,var(--rust) 0 14%,#e6c58a 14.5% 16%,transparent 16.5%),
+    repeating-radial-gradient(circle,#141414 0 2px,#202020 2px 3.2px);
+  box-shadow:0 6px 12px rgba(0,0,0,.6),inset 0 0 0 3px #0c0c0c}
+.wrf-precord::after{content:'';position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 20deg,transparent 0 30deg,rgba(255,255,255,.12) 45deg,transparent 60deg 210deg,rgba(255,255,255,.08) 225deg,transparent 240deg)}
+.wrf-ptone{position:absolute;right:17%;top:10%;width:4%;height:62%;border-radius:6px;transform-origin:50% 6%;transform:rotate(18deg);
+  background:linear-gradient(90deg,#c9ced4,#8d949b);box-shadow:3px 4px 6px rgba(0,0,0,.4);transition:transform .9s cubic-bezier(.3,.7,.3,1)}
+.wrf-ptone::before{content:'';position:absolute;left:-90%;top:-6%;width:280%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e1e5ea,#6c737a)}
+.wrf-painted.power-on .wrf-ptone{transform:rotate(30deg)}
+.wrf-power{position:absolute;right:6%;bottom:9%;width:11%;aspect-ratio:1;border-radius:50%;border:3px solid #1a0f06;padding:0;
+  background:radial-gradient(circle at 35% 35%,#ff8a7a,#b02a1a);box-shadow:0 3px 6px rgba(0,0,0,.5)}
+.wrf-painted.power-on .wrf-power{background:radial-gradient(circle at 35% 35%,#b8ffd8,#2f9a5e);box-shadow:0 0 14px rgba(120,255,180,.7)}
+
+/* cassette */
+.wrf-tape{aspect-ratio:1.58;border-radius:10px;background:linear-gradient(#2d3a46,#1c252e);box-shadow:0 12px 18px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.12)}
+.wrf-tape .lbl{position:absolute;left:8%;right:8%;top:10%;height:52%;border-radius:4px;background:linear-gradient(#f3e8cf 0 28%,var(--rust) 28% 36%,#f3e8cf 36%);display:flex;align-items:center;justify-content:space-around;padding:0 12%}
+.wrf-tape .lbl i{width:24%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#f3e8cf 0 20%,#3a2a1a 22% 58%,#6d5638 60%);box-shadow:inset 0 0 0 2px #2a1a0c}
+.wrf-tape p{position:absolute;left:0;right:0;bottom:9%;margin:0;text-align:center;font-family:'Courier New',monospace;font-size:clamp(9px,.85vw,13px);color:#9fb6c8;letter-spacing:.14em;white-space:nowrap}
+.wrf-tape::after{content:'';position:absolute;left:30%;right:30%;bottom:0;height:12%;border-radius:6px 6px 0 0;background:#141b22}
+.wrf-painted.power-on~.wrf-tape .lbl i{animation:reel 2.4s linear infinite}
+@keyframes reel{to{transform:rotate(360deg)}}
+
+/* album row — drag-scroll */
+.wrf-grid{display:flex;gap:10px;overflow-x:auto;padding:6px 2px 10px;scrollbar-width:none;cursor:grab;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 4%,#000 96%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 4%,#000 96%,transparent 100%)}
+.wrf-grid::-webkit-scrollbar{display:none}
+.wrf-grid button{flex:0 0 clamp(64px,9vw,120px);aspect-ratio:1;border-radius:8px;border:0;padding:6px;display:flex;align-items:flex-end;
+  color:#fff;font-family:'Courier New',monospace;font-size:clamp(8px,.75vw,11px);letter-spacing:.08em;text-align:left;
+  box-shadow:0 4px 10px rgba(40,24,8,.45);transition:transform .2s}
+.wrf-grid button:hover{transform:translateY(-4px)}
+.wrf-grid button.on{outline:3px solid var(--gold);outline-offset:2px}
+
+/* ---------- mobile ---------- */
+@media (max-width:760px){
+  .topbar{padding-left:66px;font-size:11px}.topbar .now{display:none}
+  .siderail{width:50px;padding:54px 5px 10px}.siderail button{width:38px;height:38px}
+  #book{left:16%;width:80%;top:17%;height:58%}
+  #tabs{left:18%;top:12%}
+  .majorsheet{grid-template-columns:1fr;background:var(--paper)}.page:last-child{display:none}
+  #jars{left:17%;top:78%;width:22%}#jars span{height:56px!important}
+  #scissors,.loupe{display:none}
+  #polaroid{right:4%;top:77%;width:22%}
+  #radio{right:auto;left:44%;top:80%;width:20%}
+  #notepad{display:none}
+  .wrfradio{inset:46px 0 0 50px}
+  body.radioview .wrf-title{left:12%;width:80%!important}
+  body.radioview .wrf-turn{left:14%;top:20%;width:76%!important;transform:none}
+  body.radioview .wrf-tape{left:8%;top:60%;width:40%!important}
+  body.radioview .wrf-backbook{width:8%!important}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="topbar"><b>Wise Rock Fish</b><span>field desk</span><span class="now" id="now">♪ radio off</span></header>
+
+<nav class="siderail" aria-label="Views">
+  <button data-v="feed" class="on" title="Book">📖</button>
+  <button data-v="radio" title="Radio">📻</button>
+</nav>
+
+<div id="tabs" role="tablist">
+  <button data-v="feed" class="on">📖 Notes</button>
+  <button data-v="radio">📻 Radio</button>
+</div>
+
+<section id="book">
+  <div class="bookframe">
+    <div class="majorsheet">
+      <article class="page">
+        <div class="kicker">entry 07 · the desk</div>
+        <h2>Plan it on top of the real thing</h2>
+        <p>This page is a stand-in site. Open it in <b>blueprint.html?site=demo.html</b> and every object on the desk turns into something you can track, move, annotate and animate.</p>
+        <ul>
+          <li>cyan box: where it lives now</li>
+          <li>gold box: where it should go</li>
+          <li>mint line: how it should move</li>
+        </ul>
+        <span class="folio">— 14 —</span>
+      </article>
+      <article class="page">
+        <div class="kicker">entry 08 · the radio</div>
+        <h2>Wise Rock Fish Radio</h2>
+        <p>Flip to the 📻 tab. The desk clears and the studio comes out: turntable, cassette and album row, all positioned by <code>body.radioview</code> rules.</p>
+        <div class="sketch"><i style="left:58%;top:12%;width:30%;aspect-ratio:1"></i><i style="left:8%;top:52%;width:18%;height:28%;border-radius:4px"></i></div>
+        <span class="folio">— 15 —</span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div id="jars" aria-hidden="true"><span></span><span></span><span></span></div>
+<div id="scissors" aria-hidden="true">✂</div>
+<figure id="polaroid"><div></div><p>terrace, dusk</p></figure>
+<button id="radio" title="Open the radio" aria-label="Open the radio"></button>
+<form id="notepad" onsubmit="return false">
+  <b>VOTE · next stream</b>
+  <label><input type="radio" name="v" checked> drone night</label>
+  <label><input type="radio" name="v"> tape loops</label>
+  <label><input type="radio" name="v"> reggae dub</label>
+</form>
+<div class="loupe" aria-hidden="true"></div>
+
+<!-- ===== radio studio (shown with body.radioview) ===== -->
+<div class="wrfradio wrf-studio">
+  <button class="wrf-backbook" title="Back to the book" data-v="feed">📖</button>
+  <div class="wrf-title"><h1>WISE ROCK FISH</h1><p>RADIO · TRACE</p></div>
+  <div class="wrf-turn wrf-painted" id="turn">
+    <div class="wrf-pslab"></div>
+    <div class="wrf-pbase"></div>
+    <div class="wrf-precord" id="rec"></div>
+    <div class="wrf-ptone"></div>
+    <button class="wrf-power" id="power" title="Power" aria-label="Power"></button>
+  </div>
+  <div class="wrf-tape"><div class="lbl"><i></i><i></i></div><p>SIDE A · LOOPS</p></div>
+  <div class="wrf-grid" id="grid"></div>
+</div>
+
+<script>
+// ----- view switching (same entry points blueprint.html's Book/Radio buttons click) -----
+function setView(v){
+  document.body.classList.toggle('radioview',v==='radio');
+  document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+}
+document.querySelectorAll('[data-v]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
+document.getElementById('radio').addEventListener('click',()=>setView('radio'));
+
+// ----- album row -----
+const ALBUMS=[
+  ['deep space one','#1b2a4a','#5f8ba6'],['drone zone','#2a1a3a','#8a6ac0'],['drone zone ii','#3a2a4a','#c9a0ff'],
+  ['synphaera','#0f3a3a','#6fd0c0'],['n5md','#3a3a3a','#c8ccd2'],['reggae dub','#2e4421','#d8a24a'],
+  ['groove salad','#3f5b2e','#a8f5cf'],['secret agent','#2a1a0c','#b4552e'],['tape loops','#1c252e','#f0dca0']
+];
+const grid=document.getElementById('grid'), now=document.getElementById('now');
+ALBUMS.forEach(([name,a,b],i)=>{
+  const t=document.createElement('button');
+  t.style.background='radial-gradient(circle at 70% 25%,'+b+' 0 18%,transparent 19%),linear-gradient(145deg,'+a+','+b+')';
+  t.textContent=name; t.onclick=()=>{ grid.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===t)); now.textContent='♪ '+name; if(!on) power(); };
+  grid.appendChild(t);
+});
+// drag-scroll
+let gx=null;
+grid.addEventListener('pointerdown',e=>{ gx={x:e.clientX,s:grid.scrollLeft,moved:false}; });
+grid.addEventListener('pointermove',e=>{ if(!gx)return; const d=e.clientX-gx.x; if(Math.abs(d)>4)gx.moved=true; grid.scrollLeft=gx.s-d; });
+addEventListener('pointerup',()=>{ gx=null; });
+
+// ----- record: JS physics loop (momentum + friction), NOT a CSS animation — the house style -----
+const turn=document.getElementById('turn'), rec=document.getElementById('rec');
+let on=false, ang=0, vel=0, last=performance.now();
+const TARGET=200, SPIN_UP=120, FRICTION=.985; // deg/s, deg/s², per-frame decay when off
+function power(){ on=!on; turn.classList.toggle('power-on',on); if(!on) now.textContent='♪ radio off'; else if(now.textContent==='♪ radio off') now.textContent='♪ tuning…'; }
+document.getElementById('power').addEventListener('click',power);
+(function loop(t){
+  const dt=Math.min(.05,(t-last)/1000); last=t;
+  if(on) vel=Math.min(TARGET,vel+SPIN_UP*dt); else vel*=Math.pow(FRICTION,dt*60);
+  if(vel<.5&&!on) vel=0;
+  ang=(ang+vel*dt)%360; rec.style.transform='rotate('+ang+'deg)';
+  requestAnimationFrame(loop);
+})(last);
+
+if(location.hash==='#radio') setView('radio');
+</script>
+</body>
+</html>

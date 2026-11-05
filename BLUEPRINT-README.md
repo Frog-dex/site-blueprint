@@ -1,4 +1,4 @@
-# Spirit Strikers — Blueprint System (AI Handoff Spec, v1)
+# Spirit Strikers — Blueprint System (AI Handoff Spec, v2)
 
 This file is the contract between **blueprint.html** (Blu's planning tool) and any AI model
 asked to apply a blueprint. Read this fully before touching the site. Follow it exactly.
@@ -8,12 +8,14 @@ asked to apply a blueprint. Read this fully before touching the site. Follow it 
 | File | Role |
 |---|---|
 | `index.html` | THE live site (spiritstriker.app). ~5 MB single-file monolith. Edit surgically — grep for anchors, never rewrite wholesale. Always back up first: `cp index.html index.html.bak-<tag>-$(date +%Y%m%d-%H%M%S)` |
-| `blueprint.html` | Planning tool. Loads `index.html` in a same-origin iframe, overlays outlines/notes/animation paths/drawings. Persists to `localStorage['ss-blueprint-v1']`, exports the JSON below. |
+| `blueprint.html` | Planning tool. Loads `index.html` in a same-origin iframe, overlays outlines/notes/animation paths/drawings. Persists per page to `localStorage['ss-blueprint-v2:<site>']` (older `ss-blueprint-v1` data is migrated automatically), exports/imports the JSON below. |
 | `radio-plan.html` | Simpler drag-editor for the radio view only (emits `body.radioview` CSS). |
 | `plan.html` | Floor-plan editor for the 3D observatory room (emits `models/layout.js`). |
+| `demo.html` | Self-contained stand-in for `index.html` (CSS only, no assets) that uses the selectors below. Use it to try the tool or test an AI's apply step without touching the live site. |
 | `BLUEPRINT-README.md` | This spec. |
 
 Local preview: `python3 -m http.server 8803 --directory /Users/blu/gm-site` → http://localhost:8803/blueprint.html
+(From this repo on its own: `npm start` → http://localhost:8803/blueprint.html?site=demo.html)
 
 ## Site architecture facts you must know
 

@@ -24,6 +24,24 @@ html,body{margin:0;height:100%;background:#08131f;color:#bfe6ff;font-family:'Cou
 .albums img{width:calc(12.5% - 7px);aspect-ratio:1;object-fit:cover;border-radius:7px;box-shadow:0 3px 9px rgba(40,24,8,.35)}
 .ghost{border:2px dashed #c9a0ff;border-radius:8px;display:grid;place-items:center;color:#c9a0ff;font-size:12px;letter-spacing:.1em;background:rgba(201,160,255,.06);aspect-ratio:3/1}
 .bookbtn{font-size:clamp(14px,2.6vw,34px);filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+/* stand-ins drawn when the painted assets aren't next to this file (e.g. viewing the repo on its own) */
+.ph{display:grid;place-items:center;border:1.5px dashed rgba(240,220,160,.6);border-radius:8px;color:#f0dca0;font-size:11px;letter-spacing:.1em;
+  background:repeating-linear-gradient(45deg,rgba(240,220,160,.06) 0 8px,rgba(240,220,160,.12) 8px 16px);text-align:center;padding:4px}
+.tt.missing{border-radius:14px;background:linear-gradient(160deg,#3a2414,#22140a);box-shadow:0 0 0 6px #6f767e,0 12px 20px rgba(0,0,0,.4)}
+.tt.missing::before{content:'';position:absolute;left:6%;top:8%;width:62%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,#b4552e 0 14%,#e6c58a 14.5% 16%,transparent 16.5%),repeating-radial-gradient(circle,#141414 0 2px,#222 2px 3.2px)}
+.tt.missing::after{content:'turntable';position:absolute;right:6%;bottom:6%;font-size:10px;letter-spacing:.12em;color:#f0dca0}
+.tt.missing img{display:none}
+.logo-ph{font-family:Georgia,serif;font-size:clamp(14px,3vw,44px);letter-spacing:.08em;color:#f0dca0;text-shadow:0 3px 0 #5a3a18;line-height:1.1}
+.logo-ph small{display:block;font-family:'Courier New',monospace;font-size:.32em;letter-spacing:.24em;color:#a8f5cf;text-shadow:none}
+.saved{font-size:10px;color:#5f8ba6}
+@media (max-width:860px){
+  html,body{overflow:auto;height:auto}
+  #wrap{flex-direction:column;height:auto}
+  #stagewrap{padding:8px}
+  #stage{width:100%}
+  #panel{width:100%;border-left:0;border-top:1px solid #17384f}
+}
 /* panel */
 #panel{width:308px;background:#0c1a29;border-left:1px solid #17384f;padding:14px 16px;display:flex;flex-direction:column;gap:9px;overflow:auto}
 h1{font-size:15px;letter-spacing:.16em;color:#7fdfff;margin:0 0 2px;text-transform:uppercase}
@@ -59,6 +77,7 @@ textarea{width:100%;height:150px;background:#050d16;color:#8fd6a8;border:1px sol
     <div class="key"><span class="sw" style="background:#7fdfff"></span>element<span class="sw" style="background:#c9a0ff"></span>future/ghost<span class="sw" style="background:#f0dca0"></span>selected</div>
     <button class="primary" id="copy">⧉ Copy layout CSS</button>
     <button id="reset">↺ Reset to live site values</button>
+    <div class="saved" id="savedNote">layout auto-saves in this browser · arrow keys nudge the selected piece (Shift ×10)</div>
     <div class="hint">Drag pieces on the wood. The textarea is the exact <b>body.radioview</b> CSS block — copy it and tell Claude "apply the radio layout" (or paste it yourself over the positioning rules in index.html). The dashed box is the future <b>scheduler/tape zone</b> — placing it now records where it should go.</div>
     <textarea id="out" spellcheck="false"></textarea>
   </div>
@@ -73,7 +92,13 @@ const LIVE=[
   {id:'book-icon',sel:'.wrf-backbook',x:1.4,y:2,  w:3,  rot:0, z:6, kind:'book'},
   {id:'scheduler',sel:'/* future */ .wrf-schedzone', x:34, y:52, w:30, rot:0, z:1, kind:'ghost', ghost:true},
 ];
-let items=LIVE.map(o=>Object.assign({},o));
+const STORE='wrf-radio-plan-v1';
+function loadSaved(){
+  try{ const s=JSON.parse(localStorage.getItem(STORE)||'null'); if(!Array.isArray(s)) return null;
+    return LIVE.map(o=>Object.assign({},o,(s.find(x=>x.id===o.id)||{}))); }catch(e){ return null; }
+}
+function persist(){ try{ localStorage.setItem(STORE,JSON.stringify(items.map(({id,x,y,w,rot,z})=>({id,x,y,w,rot,z})))); }catch(e){} }
+let items=loadSaved()||LIVE.map(o=>Object.assign({},o));
 let sel=null;
 const stage=document.getElementById('stage');
 
@@ -115,7 +140,19 @@ function fmt(){
   return l.join('\n');
 }
 const out=document.getElementById('out');
-function refresh(){ draw(); out.value=fmt(); }
+function refresh(){ draw(); out.value=fmt(); persist(); }
+// missing painted assets → draw stand-ins instead of broken-image icons
+stage.addEventListener('error',e=>{
+  const t=e.target;
+  if(t.tagName==='IMG'){
+    const tt=t.closest('.tt'); if(tt){ tt.classList.add('missing'); return; }
+    if(t.closest('.albums')){ const d=document.createElement('div'); d.className='ph'; d.style.cssText='width:calc(12.5% - 7px);aspect-ratio:1;flex:none;font-size:9px';
+      d.textContent=(t.getAttribute('src').match(/cover-(.+)\.png/)||[,'cover'])[1]; t.replaceWith(d); return; }
+    const d=document.createElement('div'); d.className='ph'; d.style.aspectRatio='1.58'; d.textContent=t.closest('.item').dataset.id; t.replaceWith(d);
+  } else if(t.tagName==='VIDEO'){
+    const d=document.createElement('div'); d.className='logo-ph'; d.innerHTML='WISE ROCK FISH<small>TRACE logo (video missing)</small>'; t.replaceWith(d);
+  }
+},true);
 
 // ===== panel =====
 const C={name:document.getElementById('selName'),box:document.getElementById('controls'),
@@ -136,8 +173,12 @@ C.x.oninput=e=>upd('x',+e.target.value); C.y.oninput=e=>upd('y',+e.target.value)
 C.w.oninput=e=>{C.wv.textContent=e.target.value; upd('w',+e.target.value);};
 C.rot.oninput=e=>{C.rotv.textContent=e.target.value; upd('rot',+e.target.value);};
 C.z.oninput=e=>{C.zv.textContent=e.target.value; upd('z',+e.target.value);};
-document.getElementById('copy').onclick=()=>{ navigator.clipboard.writeText(fmt()); const b=document.getElementById('copy'); b.textContent='✓ Copied'; setTimeout(()=>b.textContent='⧉ Copy layout CSS',1200); };
-document.getElementById('reset').onclick=()=>{ items=LIVE.map(o=>Object.assign({},o)); select(sel); refresh(); };
+document.getElementById('copy').onclick=()=>{
+  const b=document.getElementById('copy'), done=ok=>{ b.textContent=ok?'✓ Copied':'⚠ select the text below'; setTimeout(()=>b.textContent='⧉ Copy layout CSS',1400); };
+  const fb=()=>{ out.select(); try{ return document.execCommand('copy'); }catch(e){ return false; } };
+  if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(fmt()).then(()=>done(true),()=>done(fb())); else done(fb());
+};
+document.getElementById('reset').onclick=()=>{ items=LIVE.map(o=>Object.assign({},o)); try{ localStorage.removeItem(STORE); }catch(e){} select(sel); };
 
 // ===== drag =====
 let drag=null;
@@ -158,6 +199,15 @@ stage.addEventListener('pointermove',e=>{
   refresh();
 });
 stage.addEventListener('pointerup',()=>{ drag=null; });
+stage.addEventListener('pointercancel',()=>{ drag=null; });
+document.addEventListener('keydown',e=>{
+  if(/INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  if(e.key==='Escape'){ select(null); return; }
+  const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+  const it=items.find(o=>o.id===sel); if(!d||!it) return;
+  e.preventDefault(); const st=e.shiftKey?5:0.5;
+  it.x=+(it.x+d[0]*st).toFixed(1); it.y=+(it.y+d[1]*st).toFixed(1); select(sel);
+});
 
 refresh();
 </script>
