@@ -44,6 +44,26 @@ hr{border:0;border-top:1px solid #17384f;margin:4px 0;width:100%}
 svg text{user-select:none}
 .legend{font-size:10px;color:#7fb0c8}
 .legend i{display:inline-block;width:14px;height:3px;margin:0 4px 2px 8px;vertical-align:middle}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.chip:focus-visible{outline:2px solid #7fdfff;outline-offset:1px}
+.empty{font-size:10.5px;color:#5f8ba6;font-style:italic;padding:2px 0}
+#banner{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:24px;background:rgba(7,20,39,.92);z-index:5}
+#banner.show{display:grid}
+#banner div{max-width:460px;font-size:12.5px;line-height:1.6;color:#9cc7e0}
+#banner b{color:#f0dca0}
+#banner a{color:#7fdfff}
+#siteForm{display:flex;gap:6px}
+#siteForm input{flex:1}
+#siteForm button{flex:0 0 auto}
+.kbd{font-size:10px;color:#5f8ba6;line-height:1.6}
+.kbd b{color:#7fb0c8;font-weight:normal;border:1px solid #1d4763;border-radius:3px;padding:0 4px}
+/* ---- tablet / phone: stage on top, panel below ---- */
+@media (max-width:860px){
+  html,body{overflow:auto;height:auto}
+  #wrap{flex-direction:column;height:auto}
+  #stagewrap{flex:none;height:62vh;min-height:340px;padding:8px}
+  #panel{width:100%;border-left:0;border-top:1px solid #17384f;overflow:visible}
+  button{padding:10px 8px;font-size:12.5px}
+}
 </style></head>
 <body class="bp">
 <div id="wrap">
@@ -51,10 +71,12 @@ svg text{user-select:none}
     <iframe id="site"></iframe>
     <div id="gridlayer"></div>
     <svg id="overlay" class="browse"></svg>
+    <div id="banner" role="alert"><div></div></div>
   </div></div>
   <div id="panel">
     <h1>Site Blueprint</h1>
     <p class="sub">the real site runs inside. cyan = existing area · gold = planned area. Saves locally + exports for AI handoff.</p>
+    <form id="siteForm" autocomplete="off"><input type="text" id="siteTxt" aria-label="Page to plan" placeholder="page to plan (index.html)"><button type="submit">load</button></form>
     <div class="row"><button id="vBook">📖 Book</button><button id="vRadio">📻 Radio</button><button id="bpTog" class="on">▦ Blueprint</button></div>
     <div class="modes">
       <button data-m="browse" class="on">🖱 Browse</button><button data-m="layout">✥ Plan</button><button data-m="note">✎ Notes</button>
@@ -91,8 +113,10 @@ svg text{user-select:none}
     <div id="elList" class="list"></div>
     <hr>
     <button class="on" id="exportAI">⧉ Copy AI HANDOFF spec</button>
-    <div class="row"><button id="exportJSON">⇓ JSON</button><button id="copyCSS">⧉ CSS</button><button id="clearAll" class="warn">✕ wipe</button></div>
+    <div class="row"><button id="exportJSON">⇓ JSON</button><button id="importJSON">⇑ import</button><button id="copyCSS">⧉ CSS</button><button id="clearAll" class="warn">✕ wipe</button></div>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
     <textarea id="out" spellcheck="false" placeholder="export appears here"></textarea>
+    <div class="kbd">Keys (with a box selected): <b>←↑→↓</b> nudge plan 0.5% · <b>Shift</b> ×10 · <b>Alt</b> resize · <b>Esc</b> deselect</div>
     <div class="small">Spec: <b>BLUEPRINT-README.md</b>. Any same-origin page: <b>blueprint.html?site=radio.html</b>. Future AI: read the README, then apply the JSON.</div>
   </div>
 </div>
@@ -107,10 +131,27 @@ const KNOWN={
   '.wrf-power':'power-button','#book':'book','.bookframe':'bookframe','#jars':'jars','#scissors':'scissors','#polaroid':'polaroid',
   '#radio':'desk-radio','.siderail':'siderail','#tabs':'tabs','#notepad':'vote-box','.loupe':'magnifier','.topbar':'topbar'
 };
-let DB=JSON.parse(localStorage.getItem(KEY)||'null')||{version:2,site:SITE,elements:{},drawings:{}};
+// localStorage can be unavailable (private mode, blocked site data) or hold corrupt JSON — never let that break the tool
+function load(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
+function blank(){ return {version:2,site:SITE,elements:{},drawings:{}}; }
+function normalize(db){
+  db=(db&&typeof db==='object')?db:blank();
+  db.version=2; db.site=SITE; db.elements=db.elements||{}; db.drawings=db.drawings||{};
+  for(const k in db.elements){ const r=db.elements[k]; r.plan=r.plan||null; r.notes=r.notes||[]; r.anims=r.anims||[]; if(r.applied===undefined) r.applied=null; }
+  return db;
+}
+let DB=normalize(load(KEY));
 // migrate v1 (index.html only)
-if(SITE==='index.html'&&!Object.keys(DB.elements).length){ const v1=JSON.parse(localStorage.getItem('ss-blueprint-v1')||'null'); if(v1){ DB.elements=v1.elements||{}; DB.drawings=v1.drawings||{}; for(const k in DB.elements){ DB.elements[k].plan=DB.elements[k].plan||null; } } }
-function save(){ localStorage.setItem(KEY,JSON.stringify(DB)); }
+if(SITE==='index.html'&&!Object.keys(DB.elements).length){ const v1=load('ss-blueprint-v1'); if(v1){ DB.elements=v1.elements||{}; DB.drawings=v1.drawings||{}; DB=normalize(DB); } }
+let saveWarned=false;
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(DB)); }catch(e){ if(!saveWarned){ saveWarned=true; console.warn('blueprint: could not save to localStorage — export JSON to keep your work',e); } } }
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function copyText(txt){
+  if(navigator.clipboard&&window.isSecureContext) return navigator.clipboard.writeText(txt).then(()=>true,()=>fallbackCopy(txt));
+  return Promise.resolve(fallbackCopy(txt));
+}
+function fallbackCopy(txt){ P.out.value=txt; P.out.select(); try{ return document.execCommand('copy'); }catch(e){ return false; } }
+function flash(btn,msg,orig){ btn.textContent=msg; setTimeout(()=>btn.textContent=orig,1300); }
 let mode='browse', tool='pen', sel=null, hoverEl=null, pathForAnim=null, pathCapture=false;
 
 const idoc=()=>{ try{ return iframe.contentDocument; }catch(e){ return null; } };
@@ -265,10 +306,13 @@ document.getElementById('revertLive').onclick=()=>{
 function renderList(){
   P.elList.innerHTML='';
   const v=view();
+  if(!Object.keys(DB.elements).length) P.elList.innerHTML='<div class="empty">none yet — switch to ✥ Plan and click something on the page</div>';
   Object.keys(DB.elements).forEach(selr=>{
     const rec=DB.elements[selr];
     const c=document.createElement('div'); c.className='chip'+(sel===selr?' on':'');
-    c.innerHTML='<span>'+(rec.view===v?'●':'○')+' '+label(selr)+'</span><span class="small">'+(rec.plan?'✥':'')+' '+(rec.notes.length?'✎'+rec.notes.length:'')+' '+(rec.anims.length?'◉'+rec.anims.length:'')+'</span><span class="x">×</span>';
+    c.tabIndex=0; c.title=selr;
+    c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); select(selr); } };
+    c.innerHTML='<span>'+(rec.view===v?'●':'○')+' '+esc(label(selr))+'</span><span class="small">'+(rec.plan?'✥':'')+' '+(rec.notes.length?'✎'+rec.notes.length:'')+' '+(rec.anims.length?'◉'+rec.anims.length:'')+'</span><span class="x">×</span>';
     c.onclick=e=>{ if(e.target.classList.contains('x')){ delete DB.elements[selr]; if(sel===selr)sel=null; save(); select(sel); return; } select(selr); };
     P.elList.appendChild(c);
   });
@@ -278,7 +322,7 @@ function renderAnims(){
   if(!sel) return;
   (DB.elements[sel].anims||[]).forEach((a,i)=>{
     const dv=document.createElement('div'); dv.className='anim';
-    dv.innerHTML='<span class="x">×</span><b>'+a.name+'</b> · '+a.trigger+' · '+a.dur+' · '+a.ease+(a.path?' · path('+a.path.length+')':'')+'<br>'+(a.desc||'')+' <button style="padding:1px 7px;font-size:10px;margin-top:3px">▶ preview</button>';
+    dv.innerHTML='<span class="x">×</span><b>'+esc(a.name)+'</b> · '+esc(a.trigger)+' · '+esc(a.dur)+' · '+esc(a.ease)+(a.path?' · path('+a.path.length+')':'')+'<br>'+esc(a.desc)+' <button style="padding:1px 7px;font-size:10px;margin-top:3px">▶ preview</button>';
     dv.querySelector('.x').onclick=()=>{ DB.elements[sel].anims.splice(i,1); save(); renderAnims(); redraw(); };
     dv.querySelector('button').onclick=()=>preview(sel,a);
     P.animList.appendChild(dv);
@@ -293,7 +337,7 @@ document.getElementById('aAdd').onclick=()=>{
 document.getElementById('aPath').onclick=function(){ pathCapture=true; this.textContent='✏ drawing… (draw on stage)'; };
 function preview(selr,a){
   const d=idoc(); let t; try{ t=d.querySelector(selr); }catch(e){}; if(!t) return;
-  const ms=(parseFloat(a.dur)||1)*(String(a.dur).includes('ms')?1:1000);
+  const ms=/ms\s*$/.test(String(a.dur))?(parseFloat(a.dur)||1000):(parseFloat(a.dur)||1)*1000;
   if(a.path&&a.path.length>1){
     const W=d.documentElement.clientWidth,H=d.documentElement.clientHeight;
     const px=a.path.map(p=>[p[0]/100*W,p[1]/100*H]), o=px[0];
@@ -317,7 +361,7 @@ document.querySelectorAll('#drawTools button').forEach(b=>b.onclick=()=>{
   tool=b.dataset.t; document.querySelectorAll('#drawTools button').forEach(x=>x.classList.toggle('on',x===b));
 });
 document.getElementById('bpTog').onclick=function(){ document.body.classList.toggle('bp'); this.classList.toggle('on'); };
-document.getElementById('vBook').onclick=()=>{ const d=idoc(); if(!d)return; const t=d.querySelector('#tabs button[data-v="feed"]'); if(t)t.click(); setTimeout(redraw,700); };
+document.getElementById('vBook').onclick=()=>{ const d=idoc(); if(!d)return; const t=d.querySelector('#tabs button[data-v="feed"]')||d.querySelector('.wrf-backbook'); if(t)t.click(); setTimeout(redraw,700); };
 document.getElementById('vRadio').onclick=()=>{ const d=idoc(); if(!d)return; const t=[...d.querySelectorAll('#tabs button,.siderail button')].find(x=>/radio/i.test(x.textContent||'')); if(t)t.click(); setTimeout(redraw,900); };
 
 // ---- pointer ----
@@ -356,10 +400,10 @@ overlay.addEventListener('pointerdown',e=>{
   const grip=e.target.closest&&e.target.closest('[data-grip]');
   const planbox=e.target.closest&&e.target.closest('[data-plan]');
   const exist=e.target.closest&&e.target.closest('[data-sel]');
-  if(grip){ const selr=grip.getAttribute('data-grip'); select(selr); ensurePlan(selr);
+  if(grip){ const selr=grip.getAttribute('data-grip'); select(selr); if(!ensurePlan(selr)) return;
     drag={sel:selr,kind:'size',px:e.clientX,py:e.clientY,o:Object.assign({},DB.elements[selr].plan)};
     overlay.setPointerCapture(e.pointerId); return; }
-  if(planbox){ const selr=planbox.getAttribute('data-plan'); select(selr); ensurePlan(selr);
+  if(planbox){ const selr=planbox.getAttribute('data-plan'); select(selr); if(!ensurePlan(selr)) return;
     if(mode==='layout'||mode==='browse'){ drag={sel:selr,kind:'move',px:e.clientX,py:e.clientY,o:Object.assign({},DB.elements[selr].plan)};
       overlay.setPointerCapture(e.pointerId); } return; }
   if(exist){ const selr=exist.getAttribute('data-sel'); select(selr); if(mode==='layout') ensurePlan(selr); redraw(); return; }
@@ -368,18 +412,22 @@ overlay.addEventListener('pointerdown',e=>{
   if(!t){ select(null); return; }
   const selr=cssPath(t);
   select(selr);
-  if(mode==='layout'){ ensurePlan(selr); const rec=DB.elements[selr];
+  if(mode==='layout'&&ensurePlan(selr)){ const rec=DB.elements[selr];
     drag={sel:selr,kind:'move',px:e.clientX,py:e.clientY,o:Object.assign({},rec.plan)};
     overlay.setPointerCapture(e.pointerId); }
 });
-overlay.addEventListener('pointerup',()=>{
+function endPointer(){
   if(drag){ save(); syncEdit(); drag=null; }
   if(stroke){
     if(pathCapture){ pathForAnim=stroke.points; pathCapture=false; const b=document.getElementById('aPath'); b.textContent='✓ path captured ('+stroke.points.length+' pts)'; setTimeout(()=>b.textContent='✏ draw motion path',1800); }
     else { const v=view(); (DB.drawings[v]=DB.drawings[v]||[]).push(stroke); }
     stroke=null; save(); redraw();
   }
-});
+}
+overlay.addEventListener('pointerup',endPointer);
+overlay.addEventListener('pointercancel',endPointer);
+// in non-browse modes the overlay swallows the wheel — forward it so the planned page can still scroll
+overlay.addEventListener('wheel',e=>{ if(overlay.classList.contains('browse'))return; const d=idoc(); if(d&&d.defaultView){ d.defaultView.scrollBy(e.deltaX,e.deltaY); e.preventDefault(); setTimeout(redraw,30); } },{passive:false});
 
 // ---- exports ----
 function aiHandoff(){
@@ -409,17 +457,54 @@ function cssOut(){
     out.push((rec.view==='radioview'?'body.radioview ':'')+selr+'{left:'+pl.x+'%;top:'+pl.y+'%;width:'+pl.w+'%}'); }
   return out.join('\n');
 }
-document.getElementById('exportAI').onclick=function(){ P.out.value=aiHandoff(); navigator.clipboard.writeText(P.out.value); this.textContent='✓ Copied'; setTimeout(()=>this.textContent='⧉ Copy AI HANDOFF spec',1300); };
+document.getElementById('exportAI').onclick=function(){ const t=aiHandoff(); P.out.value=t; copyText(t).then(ok=>flash(this,ok?'✓ Copied':'⚠ copy blocked — select the text below','⧉ Copy AI HANDOFF spec')); };
 document.getElementById('exportJSON').onclick=()=>{ P.out.value=JSON.stringify(DB,null,1);
   const b=new Blob([P.out.value],{type:'application/json'}), a=document.createElement('a');
-  a.href=URL.createObjectURL(b); a.download='blueprint-data.json'; a.click(); };
-document.getElementById('copyCSS').onclick=function(){ P.out.value=cssOut(); navigator.clipboard.writeText(P.out.value); };
+  a.href=URL.createObjectURL(b); a.download='blueprint-'+SITE.replace(/[^\w.-]+/g,'_').replace(/\.html?$/,'')+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); };
+document.getElementById('copyCSS').onclick=function(){ const t=cssOut(); P.out.value=t; copyText(t).then(ok=>flash(this,ok?'✓':'⚠','⧉ CSS')); };
+document.getElementById('importJSON').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=function(){
+  const f=this.files&&this.files[0]; if(!f) return;
+  f.text().then(txt=>{
+    const data=JSON.parse(txt);
+    if(!data||typeof data!=='object'||!data.elements) throw new Error('not a blueprint file (no "elements")');
+    if(data.site&&data.site!==SITE&&!confirm('This blueprint was made for '+data.site+'. Load it onto '+SITE+' anyway?')) return;
+    DB=normalize(data); save(); sel=null; select(null);
+  }).catch(err=>alert('Import failed: '+err.message)).finally(()=>{ this.value=''; });
+};
+
+// ---- keyboard: nudge / resize the selected plan box ----
+document.addEventListener('keydown',e=>{
+  if(/INPUT|TEXTAREA|SELECT/.test((e.target&&e.target.tagName)||'')) return;
+  if(e.key==='Escape'){ select(null); return; }
+  const dirs={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
+  if(!sel||!dirs[e.key]||!ensurePlan(sel)) return;
+  e.preventDefault();
+  const pl=DB.elements[sel].plan, st=e.shiftKey?5:0.5, [dx,dy]=dirs[e.key];
+  if(e.altKey){ pl.w=Math.max(1,+(pl.w+dx*st).toFixed(1)); pl.h=Math.max(1,+(pl.h+dy*st).toFixed(1)); }
+  else { pl.x=+(pl.x+dx*st).toFixed(1); pl.y=+(pl.y+dy*st).toFixed(1); }
+  save(); syncEdit(); redraw();
+});
+
+// ---- page switcher ----
+document.getElementById('siteTxt').value=SITE;
+document.getElementById('siteForm').onsubmit=e=>{ e.preventDefault(); const v=document.getElementById('siteTxt').value.trim(); if(v&&v!==SITE) location.search='?site='+encodeURIComponent(v); };
 document.getElementById('clearAll').onclick=()=>{ if(confirm('Wipe all blueprint data for '+SITE+'?')){ DB={version:2,site:SITE,elements:{},drawings:{}}; save(); sel=null; select(null); } };
 
+const banner=document.getElementById('banner');
+function showBanner(html){ banner.firstElementChild.innerHTML=html; banner.classList.add('show'); }
 iframe.addEventListener('load',()=>{ setTimeout(()=>{
-  if(!Object.keys(DB.elements).length&&SITE==='index.html'){ ['.wrf-turn','.wrf-tape','.wrf-grid','.wrf-title','#book','#jars','#scissors'].forEach(track); }
+  const d=idoc();
+  if(!d){ showBanner('<b>Can’t read '+esc(SITE)+'.</b><br>Site Blueprint only works on pages served from the <b>same origin</b> as blueprint.html. Copy blueprint.html into that site’s folder and serve them together.'); return; }
+  // books/radio buttons only make sense on pages that have those views
+  const hasViews=!!(d.querySelector('#tabs')||d.querySelector('.wrfradio'));
+  ['vBook','vRadio'].forEach(id=>document.getElementById(id).style.display=hasViews?'':'none');
+  // first visit: auto-track the well-known elements that really exist on this page
+  if(!Object.keys(DB.elements).length){ ['.wrf-turn','.wrf-tape','.wrf-grid','.wrf-title','#book','#jars','#scissors','#polaroid','#radio'].forEach(s=>{ try{ if(d.querySelector(s)) track(s); }catch(e){} }); }
   renderList(); redraw();
 },1200); });
+// a missing page loads as a 404 document, which looks like an empty stage — say so instead
+fetch(SITE,{method:'HEAD',cache:'no-store'}).then(r=>{ if(!r.ok) showBanner('<b>'+esc(SITE)+' not found ('+r.status+').</b><br>Drop blueprint.html next to the page you want to plan, or pick another page:<br><br><a href="?site=demo.html">▸ open the bundled demo (demo.html)</a> · <a href="index.html">project home</a>'); }).catch(()=>{});
 renderList();
 </script>
 </body></html>

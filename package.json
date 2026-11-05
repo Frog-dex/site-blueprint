@@ -1,0 +1,15 @@
+{
+  "name": "site-blueprint",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Visual plan-and-code overlay tool: plan changes on top of your real running site, then export an AI-ready handoff spec.",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node scripts/check.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
+  },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED"
+}
